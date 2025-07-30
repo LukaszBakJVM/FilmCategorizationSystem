@@ -1,3 +1,5 @@
+package org.lukasz.filmcategorizationsystem;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +15,7 @@ public class Movie {
     private int productionYear;
     private int ranking;
     private long sizeInBytes;
+    private String localFilePath;
 
 
     public Movie() {
@@ -66,5 +69,11 @@ public class Movie {
         this.sizeInBytes = sizeInBytes;
     }
 
+    public String getLocalFilePath() {
+        return localFilePath;
+    }
 
+    public void setLocalFilePath(String localFilePath) {
+        this.localFilePath = localFilePath;
+    }
 }
