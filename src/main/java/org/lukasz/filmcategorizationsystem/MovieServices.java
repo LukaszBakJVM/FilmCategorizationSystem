@@ -59,7 +59,7 @@ public class MovieServices {
         Path destination = Paths.get(localFilePath, file.getOriginalFilename());
 
         try {
-            Files.createDirectories(destination.getParent());
+
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new SaveFileException("Failed to save file");
