@@ -29,6 +29,11 @@ public class ExceptionsController {
     public ResponseError movieExist(MovieAlreadyExistsException ex){
         return new ResponseError(HttpStatus.CONFLICT.value(), ex.getMessage());
     }
+    @ExceptionHandler(InvalidPatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError patchException(InvalidPatchException ex){
+        return new ResponseError(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    }
 
 
 }

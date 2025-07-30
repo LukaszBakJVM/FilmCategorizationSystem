@@ -1,13 +1,16 @@
 package org.lukasz.filmcategorizationsystem;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
+import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.enums.MovieSortField;
-import org.lukasz.filmcategorizationsystem.exceptions.CustomValidationException;
-import org.lukasz.filmcategorizationsystem.exceptions.MediaFileException;
-import org.lukasz.filmcategorizationsystem.exceptions.MovieAlreadyExistsException;
-import org.lukasz.filmcategorizationsystem.exceptions.SaveFileException;
+import org.lukasz.filmcategorizationsystem.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,23 +36,25 @@ public class MovieServices {
     private final LocalValidatorFactoryBean validation;
     private final MoviesRepository repository;
     private final MoviesMapper mapper;
+    private final ObjectMapper objectMapper;
     @Value("${movie.localFilePath}")
     private String localFilePath;
 
 
-    public MovieServices(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper) {
+    public MovieServices(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper) {
         this.validation = validation;
         this.repository = repository;
         this.mapper = mapper;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
     CreateNewMovie createNewMovie(CreateNewMovie dto, MultipartFile file) {
-        String fullFilePath = localFilePath + "/" + file.getOriginalFilename();
+        String fullFilePath = Paths.get(localFilePath, file.getOriginalFilename()).toString();
         validation(dto);
         validateVideoFile(file);
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
-            throw new MovieAlreadyExistsException("Movie with title already exists: " + dto.title());
+            throw new MovieAlreadyExistsException(String.format("Movie with title already exists: %s ", dto.title()));
         });
         Movie movie = mapper.dtoToEntity(dto);
         movie.setLocalFilePath(fullFilePath);
@@ -60,27 +65,56 @@ public class MovieServices {
 
     }
 
+
     List<String> sortFieldsEnums() {
         return Arrays.stream(MovieSortField.values()).map(MovieSortField::getSort).toList();
     }
 
-    List<CreateNewMovie> findAll(String param) {
+    List<FindMovie> findAll(String param) {
         if (param.equals("film_size")) {
             return findAllAndSortBySize();
         } else if (param.equals("ranking")) {
             return findAllAndSortByRanking();
         }
-        return repository.findAll().stream().map(mapper::response).toList();
+        return repository.findAll().stream().map(mapper::findMovie).toList();
 
 
     }
 
-    private List<CreateNewMovie> findAllAndSortBySize() {
-        return repository.findAll(Sort.by("sizeInBytes")).stream().map(mapper::response).toList();
+    @Transactional
+    void updateMovie(String title, JsonMergePatch patch) {
+        Movie movie = repository.findMovieByTitle(title).orElseThrow();
+        validation(mapper.response(movie));
+
+        Movie movie1 = applyPatch(movie, patch);
+        repository.save(movie1);
     }
 
-    private List<CreateNewMovie> findAllAndSortByRanking() {
-        return repository.findAll(Sort.by("ranking")).stream().map(mapper::response).toList();
+
+    Movie applyPatch(Movie createNewMovie, JsonMergePatch patch) {
+        JsonNode jobOfferNode = objectMapper.valueToTree(createNewMovie);
+        JsonNode jobOfferPatchedNode;
+        try {
+            jobOfferPatchedNode = patch.apply(jobOfferNode);
+
+
+            return objectMapper.treeToValue(jobOfferPatchedNode, Movie.class);
+        } catch (JsonProcessingException | JsonPatchException e) {
+            throw new InvalidPatchException("Invalid patch format or data");
+        }
+
+
+
+
+    }
+
+
+    private List<FindMovie> findAllAndSortBySize() {
+        return repository.findAll(Sort.by("sizeInBytes")).stream().map(mapper::findMovie).toList();
+    }
+
+    private List<FindMovie> findAllAndSortByRanking() {
+        return repository.findAll(Sort.by("ranking")).stream().map(mapper::findMovie).toList();
     }
 
     private void saveMovieOnDisc(MultipartFile file) {

@@ -1,6 +1,7 @@
 package org.lukasz.filmcategorizationsystem;
 
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
+import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,5 +15,8 @@ public class MoviesMapper {
     }
     CreateNewMovie response(Movie movie){
         return new CreateNewMovie(movie.getTitle(), movie.getDirector(), movie.getProductionYear());
+    }
+    FindMovie findMovie(Movie movie){
+        return new FindMovie(movie.getTitle(), movie.getDirector(), movie.getProductionYear(), movie.getRanking(), movie.getSizeInBytes());
     }
 }
