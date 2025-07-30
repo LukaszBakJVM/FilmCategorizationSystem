@@ -3,11 +3,10 @@ package org.lukasz.filmcategorizationsystem;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 public class MoviesController {
@@ -21,5 +20,15 @@ public class MoviesController {
     @ResponseStatus(HttpStatus.CREATED)
     CreateNewMovie createNewMovie(@RequestPart CreateNewMovie dto, @RequestPart MultipartFile file) {
         return services.createNewMovie(dto,file);
+    }
+    @GetMapping("/sortFields")
+    @ResponseStatus(HttpStatus.OK)
+    List<String>sortFields(){
+        return services.sortFieldsEnums();
+    }
+    @GetMapping("/allMovies")
+    @ResponseStatus(HttpStatus.OK)
+    List<CreateNewMovie>allMovies(@RequestParam (defaultValue ="empty" )String sort){
+        return services.findAll(sort);
     }
 }

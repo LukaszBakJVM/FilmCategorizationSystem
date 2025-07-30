@@ -24,6 +24,11 @@ public class ExceptionsController {
     public ResponseError saveFileException(SaveFileException ex){
         return new ResponseError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
     }
+    @ExceptionHandler(MovieAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseError movieExist(MovieAlreadyExistsException ex){
+        return new ResponseError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    }
 
 
 }

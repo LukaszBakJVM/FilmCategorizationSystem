@@ -1,6 +1,12 @@
 package org.lukasz.filmcategorizationsystem;
 
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface MoviesRepository extends JpaRepository<Movie,Long> {
+import java.util.Optional;
+
+public interface MoviesRepository extends JpaRepository<Movie, Long> {
+    Optional<Movie>findMovieByTitle(String title);
+
+
 }
