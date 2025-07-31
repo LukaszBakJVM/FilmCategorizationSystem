@@ -34,7 +34,7 @@ public class MoviesController {
 
     @GetMapping("/allMovies")
     @ResponseStatus(HttpStatus.OK)
-    List<FindMovie> allMovies(@RequestParam(defaultValue = "empty") String sort) {
+    List<FindMovie> allMovies(@RequestParam(defaultValue = "id") String sort) {
         return services.findAll(sort);
     }
 

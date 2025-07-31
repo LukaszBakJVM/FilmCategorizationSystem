@@ -90,12 +90,8 @@ public class MovieServices {
     }
 
     List<FindMovie> findAll(String param) {
-        if (param.equals("film_size")) {
-            return findAllAndSortBySize();
-        } else if (param.equals("ranking")) {
-            return findAllAndSortByRanking();
-        }
-        return repository.findAll().stream().map(mapper::findMovie).toList();
+        String sort = sortBy(param);
+        return repository.findAll(Sort.by(sort)).stream().map(mapper::findMovie).toList();
 
 
     }
@@ -114,7 +110,7 @@ public class MovieServices {
     }
 
     int ranking(long size, String language, double vote) {
-       if (size < 209_715_200L) {
+        if (size < 209_715_200L) {
             return 100;
         }
         int ranking = 0;
@@ -148,13 +144,16 @@ public class MovieServices {
     }
 
 
-    private List<FindMovie> findAllAndSortBySize() {
-        return repository.findAll(Sort.by("sizeInBytes")).stream().map(mapper::findMovie).toList();
+    private String sortBy(String param) {
+        if (param.equals("film_size")) {
+            return "sizeInBytes";
+        } else if (param.equals("ranking")) {
+            return "ranking";
+        }
+        return "id";
     }
 
-    private List<FindMovie> findAllAndSortByRanking() {
-        return repository.findAll(Sort.by("ranking")).stream().map(mapper::findMovie).toList();
-    }
+
 
     private void saveMovieOnDisc(MultipartFile file) {
         Path destination = Paths.get(localFilePath, file.getOriginalFilename());
