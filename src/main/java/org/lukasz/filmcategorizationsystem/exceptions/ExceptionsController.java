@@ -19,9 +19,9 @@ public class ExceptionsController {
     public ResponseError unsupportedMediaFile(MediaFileException ex){
         return new ResponseError(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), ex.getMessage());
     }
-    @ExceptionHandler(SaveFileException.class)
+    @ExceptionHandler(FileException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseError saveFileException(SaveFileException ex){
+    public ResponseError saveFileException(FileException ex){
         return new ResponseError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
     }
     @ExceptionHandler(MovieAlreadyExistsException.class)

@@ -7,6 +7,7 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
+import lombok.SneakyThrows;
 import org.lukasz.filmcategorizationsystem.api.Language;
 import org.lukasz.filmcategorizationsystem.api.Results;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
@@ -16,6 +17,8 @@ import org.lukasz.filmcategorizationsystem.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -43,6 +46,7 @@ public class MovieServices {
     private final MoviesMapper mapper;
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
+
     @Value("${api.key}")
     private String apiKey;
     @Value("${movie.localFilePath}")
@@ -55,6 +59,7 @@ public class MovieServices {
         this.mapper = mapper;
         this.objectMapper = objectMapper;
         this.restClient = restClient;
+
     }
 
     @Transactional
@@ -79,8 +84,23 @@ public class MovieServices {
 
     }
 
+    @SneakyThrows
+    Resource downloadFile(String title) {
+        Resource resource;
 
-    public String searchMovieByTitle(String title) {
+        Movie movie = repository.findMovieByTitle(title).orElseThrow();
+        String patch = movie.getLocalFilePath();
+        Path filePath = Paths.get(patch);
+
+        if (!Files.exists(filePath)) {
+            throw new FileException("File not found on disk");
+        }
+        resource = new UrlResource(filePath.toUri());
+        return resource;
+
+    }
+
+    private String searchMovieByTitle(String title) {
         return UriComponentsBuilder.fromUriString("/3/search/movie").queryParam("api_key", apiKey).queryParam("query", title).build().toString();
     }
 
@@ -154,7 +174,6 @@ public class MovieServices {
     }
 
 
-
     private void saveMovieOnDisc(MultipartFile file) {
         Path destination = Paths.get(localFilePath, file.getOriginalFilename());
 
@@ -162,7 +181,7 @@ public class MovieServices {
 
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new SaveFileException("Failed to save file");
+            throw new FileException("Failed to save file");
         }
 
 
