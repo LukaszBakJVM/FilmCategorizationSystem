@@ -7,6 +7,8 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
+import org.lukasz.filmcategorizationsystem.api.Language;
+import org.lukasz.filmcategorizationsystem.api.Results;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.enums.MovieSortField;
@@ -15,9 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,15 +42,19 @@ public class MovieServices {
     private final MoviesRepository repository;
     private final MoviesMapper mapper;
     private final ObjectMapper objectMapper;
+    private final RestClient restClient;
+    @Value("${api.key}")
+    private String apiKey;
     @Value("${movie.localFilePath}")
     private String localFilePath;
 
 
-    public MovieServices(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper) {
+    public MovieServices(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient) {
         this.validation = validation;
         this.repository = repository;
         this.mapper = mapper;
         this.objectMapper = objectMapper;
+        this.restClient = restClient;
     }
 
     @Transactional
@@ -56,13 +65,23 @@ public class MovieServices {
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
             throw new MovieAlreadyExistsException(String.format("Movie with title already exists: %s ", dto.title()));
         });
+        long size = file.getSize();
         Movie movie = mapper.dtoToEntity(dto);
         movie.setLocalFilePath(fullFilePath);
-        movie.setSizeInBytes(file.getSize());
+        movie.setSizeInBytes(size);
+        Language data = result(movie.getTitle());
+        int ranking = ranking(size, data.original_language(), data.vote_average());
+        movie.setRanking(ranking);
         saveMovieOnDisc(file);
+
         repository.save(movie);
         return mapper.response(movie);
 
+    }
+
+
+    public String searchMovieByTitle(String title) {
+        return UriComponentsBuilder.fromUriString("/3/search/movie").queryParam("api_key", apiKey).queryParam("query", title).build().toString();
     }
 
 
@@ -90,8 +109,30 @@ public class MovieServices {
         repository.save(movie1);
     }
 
+    Language result(String title) {
+        return restClient.get().uri(searchMovieByTitle(title)).accept(MediaType.APPLICATION_JSON).retrieve().body(Results.class).results().getFirst();
+    }
 
-    Movie applyPatch(Movie createNewMovie, JsonMergePatch patch) {
+    int ranking(long size, String language, double vote) {
+       if (size < 209_715_200L) {
+            return 100;
+        }
+        int ranking = 0;
+
+        if ("pl".equalsIgnoreCase(language)) {
+            ranking += 200;
+        }
+
+        if (vote >= 5.0) {
+            ranking += 100;
+        }
+
+
+        return ranking;
+    }
+
+
+    private Movie applyPatch(Movie createNewMovie, JsonMergePatch patch) {
         JsonNode jobOfferNode = objectMapper.valueToTree(createNewMovie);
         JsonNode jobOfferPatchedNode;
         try {
@@ -102,8 +143,6 @@ public class MovieServices {
         } catch (JsonProcessingException | JsonPatchException e) {
             throw new InvalidPatchException("Invalid patch format or data");
         }
-
-
 
 
     }
