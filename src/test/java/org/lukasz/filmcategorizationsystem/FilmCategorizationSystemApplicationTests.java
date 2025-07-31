@@ -12,10 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
+import org.lukasz.filmcategorizationsystem.exceptions.*;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -27,8 +29,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
@@ -43,10 +44,13 @@ class FilmCategorizationSystemApplicationTests {
     static WireMockExtension wireMockServer = WireMockExtension.newInstance().options(wireMockConfig().port(dynamicPort)).build();
     @Autowired
     MoviesRepository moviesRepository;
-
-    Response response = new Response();
     @Autowired
     Gson gson;
+    Response response = new Response();
+    @Autowired
+    ExceptionsController exceptionsController;
+    @Autowired
+    MovieServices movieServices;
     @Autowired
     private MoviesController moviesController;
 
@@ -118,6 +122,76 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
+    void AddMovieWithMultipartDataUnder200MBWhenTitleExist() {
+        CreateNewMovie dto = new CreateNewMovie("title1", "director", 2011);
+        int sizeInBytes = 100 * 1024; //100MB
+        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.mp4", "video/mp4", content);
+
+        assertThrows(MovieAlreadyExistsException.class, () -> moviesController.createNewMovie(dto, mockFile));
+
+    }
+
+    @Test
+    void Validation() {
+        CreateNewMovie dto = new CreateNewMovie("", "director", 2011);
+        int sizeInBytes = 100 * 1024; //100MB
+        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.mp4", "video/mp4", content);
+
+        assertThrows(CustomValidationException.class, () -> moviesController.createNewMovie(dto, mockFile));
+
+    }
+
+    @Test
+    void ValidationMp4() {
+        CreateNewMovie dto = new CreateNewMovie("titlemp4", "director", 2011);
+        int sizeInBytes = 100 * 1024; //100MB
+        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.txt", "txt", content);
+
+        assertThrows(MediaFileException.class, () -> moviesController.createNewMovie(dto, mockFile));
+
+    }
+
+    @Test
+    void filmnotfounf() {
+        CreateNewMovie dto = new CreateNewMovie("notfoundfilm", "director", 2011);
+
+        int sizeInBytes = 250 * 1024 * 1024;  //250MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.mp4", "video/mp4", content);
+
+        moviesController.createNewMovie(dto, mockFile);
+
+
+        Movie movie = moviesRepository.findMovieByTitle("notfoundfilm").orElseThrow();
+
+        assertEquals("director", movie.getDirector());
+        assertEquals(2011, movie.getProductionYear());
+        assertEquals(0, movie.getRanking());
+        assertEquals(262144000, movie.getSizeInBytes());
+
+
+    }
+
+
+    @Test
     void shouldAShowAllFilmsSortByRanking() {
         List<FindMovie> ranking = moviesController.allMovies("ranking");
         String json = gson.toJson(ranking);
@@ -135,6 +209,15 @@ class FilmCategorizationSystemApplicationTests {
 
         JSONAssert.assertEquals(json, response.film_size, true);
 
+
+    }
+
+    @Test
+    void shouldAShowAllFilmsSortByDefaoult() {
+        List<FindMovie> ranking = moviesController.allMovies("id");
+        String json = gson.toJson(ranking);
+
+        JSONAssert.assertEquals(json, response.id, true);
 
     }
 
@@ -164,6 +247,60 @@ class FilmCategorizationSystemApplicationTests {
         Movie movie = moviesRepository.findMovieByTitle("title1").orElseThrow();
         assertEquals("New director", movie.getDirector());
         assertNotEquals("director1", movie.getDirector());
+
+    }
+
+    @Test
+    void uu() {
+        List<Movie> all = moviesRepository.findAll();
+        assertEquals(4, all.size());
+
+    }
+
+
+    @Test
+    void testUserNotFoundException() {
+        CustomValidationException ex = new CustomValidationException("User not found");
+        ResponseError error = exceptionsController.userNotFoundException(ex);
+        assertEquals(HttpStatus.BAD_REQUEST.value(), error.status());
+        assertEquals("User not found", error.message());
+    }
+
+    @Test
+    void testUnsupportedMediaFile() {
+        MediaFileException ex = new MediaFileException("Unsupported media type");
+        ResponseError error = exceptionsController.unsupportedMediaFile(ex);
+        assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), error.status());
+        assertEquals("Unsupported media type", error.message());
+    }
+
+    @Test
+    void testfileException() {
+        FileException ex = new FileException("Failed to save file");
+        ResponseError error = exceptionsController.saveFileException(ex);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), error.status());
+        assertEquals("Failed to save file", error.message());
+
+
+    }
+
+    @Test
+    void testmovieExist() {
+        MovieAlreadyExistsException ex = new MovieAlreadyExistsException("Movie with title already exists: test1");
+        ResponseError error = exceptionsController.movieExist(ex);
+        assertEquals(HttpStatus.CONFLICT.value(), error.status());
+        assertEquals("Movie with title already exists: test1", error.message());
+
+
+    }
+
+    @Test
+    void FileException() {
+
+        String title = "title2";
+
+        assertThrows(FileException.class, () -> moviesController.downloadFile(title));
+
 
     }
 
