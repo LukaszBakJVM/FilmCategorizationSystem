@@ -1,0 +1,42 @@
+{
+  "id" : "d8a65d88-ead7-4d3d-8bd8-1cf59c05bba3",
+  "name" : "3_search_movie",
+  "request" : {
+    "urlPath" : "/3/search/movie",
+    "method" : "GET",
+    "queryParameters" : {
+      "api_key" : {
+        "equalTo" : "d1c24bf2a1ec52faac9bc3ebdc203d5c"
+      },
+      "query" : {
+        "equalTo" : "Boże Ciało"
+      }
+    }
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"page\":1,\"results\":[{\"adult\":false,\"backdrop_path\":\"/sVWUcBHwq2LQtDeqwXzI1uMpA3h.jpg\",\"genre_ids\":[18],\"id\":471707,\"original_language\":\"pl\",\"original_title\":\"Boże Ciało\",\"overview\":\"A pious 20-year-old juvenile delinquent is sent to work at a sawmill in a small town; on arrival, he dresses up as a priest and accidentally takes over the local parish. The arrival of this young, charismatic preacher is an opportunity for the local community to begin the healing process after a tragedy that happened a year prior.\",\"popularity\":1.4051,\"poster_path\":\"/aUM9CZLwvbgTMiYducW3rBoqDyd.jpg\",\"release_date\":\"2019-09-10\",\"title\":\"Corpus Christi\",\"video\":false,\"vote_average\":7.6,\"vote_count\":562},{\"adult\":false,\"backdrop_path\":null,\"genre_ids\":[99],\"id\":1276710,\"original_language\":\"pl\",\"original_title\":\"Boże Ciało\",\"overview\":\"A documentary record of the only day of the year when Lipiny, condemned to hunger and poverty by the political transformations of the Third Republic, comes alive during the church resurrection, recalling the glory of this industrial settlement, once synonymous with Silesian values.\",\"popularity\":0.0071,\"poster_path\":null,\"release_date\":\"2004-01-01\",\"title\":\"Boże Ciało\",\"video\":false,\"vote_average\":0.0,\"vote_count\":0}],\"total_pages\":1,\"total_results\":2}",
+    "headers" : {
+      "X-Cache" : "Miss from cloudfront",
+      "Alt-Svc" : "h3=\":443\"; ma=86400",
+      "Server" : "openresty",
+      "x-memc-age" : "16644",
+      "x-memc-key" : "1cbc5443e7c9cdb7c83cec277402601fd781b3cb4955e8a35497969be8fbb3a7",
+      "X-Amz-Cf-Pop" : "WAW51-P1",
+      "x-task-id" : "67edcef36d1e428fa227e056eb2cb5f6",
+      "x-memc-expires" : "11020",
+      "Date" : "Thu, 31 Jul 2025 15:17:09 GMT",
+      "Via" : "1.1 f1e707a645d1b585e3b6fc5ef39d2e56.cloudfront.net (CloudFront)",
+      "x-memc" : "HIT",
+      "Cache-Control" : "public, max-age=11020",
+      "ETag" : "W/\"ef54c379a174205a0c4aae0d3de885a8\"",
+      "X-Amz-Cf-Id" : "S0zyxsGEw7FU5UJcAANX1RZmkPjsvU-lFM9RYN0_HIfoGCzyIjRqeA==",
+      "x-az" : "us-east-1a",
+      "Vary" : [ "accept-encoding", "Origin" ],
+      "Content-Type" : "application/json;charset=utf-8"
+    }
+  },
+  "uuid" : "d8a65d88-ead7-4d3d-8bd8-1cf59c05bba3",
+  "persistent" : true
+
+}

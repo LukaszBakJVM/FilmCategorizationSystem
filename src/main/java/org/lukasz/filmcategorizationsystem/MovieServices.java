@@ -126,7 +126,12 @@ public class MovieServices {
     }
 
     Language result(String title) {
-        return restClient.get().uri(searchMovieByTitle(title)).accept(MediaType.APPLICATION_JSON).retrieve().body(Results.class).results().getFirst();
+
+        List<Language> results = restClient.get().uri(searchMovieByTitle(title)).accept(MediaType.APPLICATION_JSON).retrieve().body(Results.class).results();
+        if (!results.isEmpty()) {
+            return results.getFirst();
+        }
+        return new Language("null", 0);
     }
 
     int ranking(long size, String language, double vote) {
@@ -137,6 +142,7 @@ public class MovieServices {
 
         if ("pl".equalsIgnoreCase(language)) {
             ranking += 200;
+
         }
 
         if (vote >= 5.0) {

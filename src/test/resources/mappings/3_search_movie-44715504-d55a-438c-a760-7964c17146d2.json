@@ -1,0 +1,43 @@
+{
+  "id" : "44715504-d55a-438c-a760-7964c17146d2",
+  "name" : "3_search_movie",
+  "request" : {
+    "urlPath" : "/3/search/movie",
+    "method" : "GET",
+    "queryParameters" : {
+      "api_key" : {
+        "equalTo" : "d1c24bf2a1ec52faac9bc3ebdc203d5c"
+      },
+      "query" : {
+        "equalTo" : "notfoundfilm"
+      }
+    }
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"page\":1,\"results\":[],\"total_pages\":1,\"total_results\":0}",
+    "headers" : {
+      "X-Cache" : "Hit from cloudfront",
+      "Alt-Svc" : "h3=\":443\"; ma=86400",
+      "Server" : "openresty",
+      "x-memc-age" : "0",
+      "x-memc-key" : "9c8b711f6b8ea98c80ead1e0eb7417e432f70cac0de8c426c6fbb73f5ca38039",
+      "X-Amz-Cf-Pop" : "WAW51-P1",
+      "x-task-id" : "4333318a0e274afd8193286d4f615c6f",
+      "x-memc-expires" : "25563",
+      "Date" : "Thu, 31 Jul 2025 15:18:48 GMT",
+      "Via" : "1.1 1947a094c5f1be25e44f62ae3fb60d94.cloudfront.net (CloudFront)",
+      "x-memc" : "MISS, STORE",
+      "Cache-Control" : "public, max-age=25563",
+      "ETag" : "W/\"0e23279b004381f72a34159d5c7dfd1f\"",
+      "X-Amz-Cf-Id" : "KmJlKd1mdROWqpS_6s4oOJthkXMggBTqPljBBSjl6zTLDWA0jIkfIw==",
+      "x-az" : "us-east-1c",
+      "Vary" : [ "accept-encoding", "Origin" ],
+      "Age" : "29",
+      "Content-Type" : "application/json;charset=utf-8"
+    }
+  },
+  "uuid" : "44715504-d55a-438c-a760-7964c17146d2",
+  "persistent" : true
+
+}
