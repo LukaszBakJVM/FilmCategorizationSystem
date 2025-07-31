@@ -1,30 +1,38 @@
 package org.lukasz.filmcategorizationsystem;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jackson.JsonLoader;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.google.gson.Gson;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
+import org.lukasz.filmcategorizationsystem.dto.FindMovie;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.io.IOException;
+import java.util.List;
+
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 @Rollback
-@AutoConfigureWebTestClient
 class FilmCategorizationSystemApplicationTests {
 
 
@@ -35,9 +43,10 @@ class FilmCategorizationSystemApplicationTests {
     static WireMockExtension wireMockServer = WireMockExtension.newInstance().options(wireMockConfig().port(dynamicPort)).build();
     @Autowired
     MoviesRepository moviesRepository;
-    @Autowired
-    WebTestClient webTestClient;
+
     Response response = new Response();
+    @Autowired
+    Gson gson;
     @Autowired
     private MoviesController moviesController;
 
@@ -110,16 +119,52 @@ class FilmCategorizationSystemApplicationTests {
 
     @Test
     void shouldAShowAllFilmsSortByRanking() {
+        List<FindMovie> ranking = moviesController.allMovies("ranking");
+        String json = gson.toJson(ranking);
 
-        webTestClient.get().uri(uriBuilder -> uriBuilder.path("/movies/all").queryParam("sort", "ranking").build())
-                .exchange().expectStatus().isOk().expectBody().json(response.ranking);
+        JSONAssert.assertEquals(json, response.ranking, true);
+
+
     }
 
     @Test
     void shouldAShowAllFilmsSortBySize() {
 
-        webTestClient.get().uri(uriBuilder -> uriBuilder.path("/movies/all").queryParam("sort", "film_size").build())
-                .exchange().expectStatus().isOk();//.expectBody().json(response.ranking);
+        List<FindMovie> filmSize = moviesController.allMovies("film_size");
+        String json = gson.toJson(filmSize);
+
+        JSONAssert.assertEquals(json, response.film_size, true);
+
+
+    }
+
+    @Test
+    void shouldAShowAllSortFields() {
+        List<String> sortFields = moviesController.sortFields();
+
+        String json = gson.toJson(sortFields);
+
+        JSONAssert.assertEquals(json, response.sortFields, true);
+
+
+    }
+
+    @Test
+    void shouldUpdateRecord() throws JsonPatchException, IOException {
+
+
+        String patchStr = "{ \"director\": \"New director\" }";
+
+        JsonNode patchNode = JsonLoader.fromString(patchStr);
+        JsonMergePatch patch = JsonMergePatch.fromJson(patchNode);
+
+
+        moviesController.updateMovie("title1", patch);
+
+        Movie movie = moviesRepository.findMovieByTitle("title1").orElseThrow();
+        assertEquals("New director", movie.getDirector());
+        assertNotEquals("director1", movie.getDirector());
+
     }
 
 
