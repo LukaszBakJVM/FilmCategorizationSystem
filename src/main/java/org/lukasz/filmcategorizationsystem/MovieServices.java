@@ -1,9 +1,7 @@
 package org.lukasz.filmcategorizationsystem;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
@@ -89,7 +87,7 @@ public class MovieServices {
     Resource downloadFile(final String title) {
         Resource resource;
 
-        Movie movie = repository.findMovieByTitle(title).orElseThrow();
+        Movie movie = repository.findMovieByTitle(title).orElseThrow(()->new MovieNotFoundException(String.format("Movie %s not found",title)));
         String patch = movie.getLocalFilePath();
         Path filePath = Paths.get(patch);
 
@@ -119,14 +117,14 @@ public class MovieServices {
 
     @Transactional
     void updateMovie(final String title, final JsonMergePatch patch) {
-        Movie movie = repository.findMovieByTitle(title).orElseThrow();
+        Movie movie = repository.findMovieByTitle(title).orElseThrow(()->new MovieNotFoundException(String.format("Movie %s not found",title)));
         validation(mapper.response(movie));
 
-        Movie movie1 = applyPatch(movie, patch);
-        repository.save(movie1);
+        Movie applyPatch = applyPatch(movie, patch);
+        repository.save(applyPatch);
     }
 
-    Language result(final String title) {
+    private Language result(final String title) {
 
         List<Language> results = restClient.get().uri(searchMovieByTitle(title)).accept(MediaType.APPLICATION_JSON).retrieve().body(Results.class).results();
         if (!results.isEmpty()) {
@@ -135,7 +133,7 @@ public class MovieServices {
         return new Language("null", 0);
     }
 
-    private int ranking(long size, String language, double vote) {
+    private int ranking(final long size, final String language, final double vote) {
         long smallFile = 209_715_200L;
         if (size < smallFile) {
             return 100;
@@ -156,19 +154,13 @@ public class MovieServices {
     }
 
 
+    @SneakyThrows
     private Movie applyPatch(final Movie createNewMovie, final JsonMergePatch patch) {
-        JsonNode jobOfferNode = objectMapper.valueToTree(createNewMovie);
-        JsonNode jobOfferPatchedNode;
-        try {
-            jobOfferPatchedNode = patch.apply(jobOfferNode);
+        JsonNode movieNode = objectMapper.valueToTree(createNewMovie);
+        JsonNode moviePatchedNode = patch.apply(movieNode);
 
 
-            return objectMapper.treeToValue(jobOfferPatchedNode, Movie.class);
-        } catch (JsonProcessingException | JsonPatchException e) {
-            throw new InvalidPatchException("Invalid patch format or data");
-        }
-
-
+        return objectMapper.treeToValue(moviePatchedNode, Movie.class);
     }
 
 

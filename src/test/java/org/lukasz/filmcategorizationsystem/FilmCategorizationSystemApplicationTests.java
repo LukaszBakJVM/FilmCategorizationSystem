@@ -281,6 +281,23 @@ class FilmCategorizationSystemApplicationTests {
         assertNotEquals("director1", movie.getDirector());
 
     }
+    @Test
+    void shouldApplyPatch_shoutThrowException() throws JsonPatchException, IOException {
+        String title = "notExist";
+
+
+        String patchStr = "{ \"director\": \"New director\" }";
+
+        JsonNode patchNode = JsonLoader.fromString(patchStr);
+        JsonMergePatch patch = JsonMergePatch.fromJson(patchNode);
+
+
+        assertThrows(MovieNotFoundException.class, () -> moviesController.updateMovie(title,patch));
+
+
+
+
+    }
 
 
     @Test
@@ -315,6 +332,15 @@ class FilmCategorizationSystemApplicationTests {
         ResponseError error = exceptionsController.movieExist(ex);
         assertEquals(HttpStatus.CONFLICT.value(), error.status());
         assertEquals("Movie with title already exists: test1", error.message());
+
+
+    }
+    @Test
+    void testMovieNotFoundException() {
+        MovieNotFoundException ex = new MovieNotFoundException("Movie notExist not found");
+        ResponseError error = exceptionsController.movieNotFound(ex);
+        assertEquals(HttpStatus.NOT_FOUND.value(), error.status());
+        assertEquals("Movie notExist not found", error.message());
 
 
     }
