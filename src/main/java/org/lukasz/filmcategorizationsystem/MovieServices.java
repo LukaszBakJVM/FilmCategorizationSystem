@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class MovieServices {
-    private static final Set<String> SUPPORTED_VIDEO_TYPES = Set.of("video/mp4", "video/x-matroska", "video/x-msvideo");
+
+
     private final Logger logger = LoggerFactory.getLogger(MovieServices.class);
     private final LocalValidatorFactoryBean validation;
     private final MoviesRepository repository;
@@ -134,8 +135,9 @@ public class MovieServices {
         return new Language("null", 0);
     }
 
-   private int ranking(long size, String language, double vote) {
-        if (size < 209_715_200L) {
+    private int ranking(long size, String language, double vote) {
+        long smallFile = 209_715_200L;
+        if (size < smallFile) {
             return 100;
         }
         int ranking = 0;
@@ -154,7 +156,7 @@ public class MovieServices {
     }
 
 
-    private Movie applyPatch( final Movie createNewMovie, final JsonMergePatch patch) {
+    private Movie applyPatch(final Movie createNewMovie, final JsonMergePatch patch) {
         JsonNode jobOfferNode = objectMapper.valueToTree(createNewMovie);
         JsonNode jobOfferPatchedNode;
         try {
@@ -211,9 +213,11 @@ public class MovieServices {
     }
 
     private void validateVideoFile(MultipartFile file) {
+        Set<String> supportedVideoTypes = Set.of("video/mp4", "video/x-matroska", "video/x-msvideo");
+
         String contentType = file.getContentType();
 
-        if (!SUPPORTED_VIDEO_TYPES.contains(contentType)) {
+        if (!supportedVideoTypes.contains(contentType)) {
             throw new MediaFileException("Only video files (.mp4, .avi, .mkv) are allowed");
         }
     }
