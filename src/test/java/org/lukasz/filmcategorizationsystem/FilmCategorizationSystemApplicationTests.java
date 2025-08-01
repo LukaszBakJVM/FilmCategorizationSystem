@@ -15,15 +15,19 @@ import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.exceptions.*;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.json.JsonCompareMode;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -36,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 @Rollback
+@AutoConfigureWebTestClient
 class FilmCategorizationSystemApplicationTests {
 
 
@@ -51,6 +56,8 @@ class FilmCategorizationSystemApplicationTests {
     Response response = new Response();
     @Autowired
     ExceptionsController exceptionsController;
+    @Autowired
+    WebTestClient webTestClient;
 
 
     @Autowired
@@ -218,6 +225,15 @@ class FilmCategorizationSystemApplicationTests {
         JSONAssert.assertEquals(json, response.id, true);
 
     }
+
+    @Test
+    void shouldAShowAllFilmsSortByIdWhenSortNull() {
+
+        webTestClient.get().uri("/movies/all").accept(MediaType.APPLICATION_JSON).exchange()
+                .expectStatus().isOk().expectBody().json(response.id, JsonCompareMode.STRICT);
+
+    }
+
 
     @Test
     void shouldAShowAllSortFields() {
