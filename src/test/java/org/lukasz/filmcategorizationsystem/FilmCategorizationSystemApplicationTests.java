@@ -284,11 +284,11 @@ class FilmCategorizationSystemApplicationTests {
 
 
     @Test
-    void testUserNotFoundException() {
-        CustomValidationException ex = new CustomValidationException("User not found");
-        ResponseError error = exceptionsController.userNotFoundException(ex);
+    void testValidationException_whenTitleBlank() {
+        CustomValidationException ex = new CustomValidationException("Title cannot be blank");
+        ResponseError error = exceptionsController.movieValidationException(ex);
         assertEquals(HttpStatus.BAD_REQUEST.value(), error.status());
-        assertEquals("User not found", error.message());
+        assertEquals("Title cannot be blank", error.message());
     }
 
     @Test
