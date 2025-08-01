@@ -11,7 +11,7 @@ public class ExceptionsController {
 
     @ExceptionHandler(CustomValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseError userNotFoundException(CustomValidationException ex) {
+    public ResponseError movieValidationException(CustomValidationException ex) {
         return new ResponseError(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
     @ExceptionHandler(MediaFileException.class)
