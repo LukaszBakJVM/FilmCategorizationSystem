@@ -26,7 +26,7 @@ public class MoviesController {
 
     @PostMapping( value = "/addMovie",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @ResponseStatus(HttpStatus.CREATED)
-    CreateNewMovie createNewMovie(@RequestPart CreateNewMovie dto, @RequestPart MultipartFile file) {
+    CreateNewMovie createNewMovie(@RequestPart final CreateNewMovie dto, @RequestPart final MultipartFile file) {
         return services.createNewMovie(dto, file);
     }
 
@@ -38,18 +38,18 @@ public class MoviesController {
 
     @GetMapping("/all")
     @ResponseStatus(HttpStatus.OK)
-    List<FindMovie> allMovies(@RequestParam(required = false, defaultValue = "id") String sort) {
+    List<FindMovie> allMovies(@RequestParam(required = false, defaultValue = "id") final String sort) {
         return services.findAll(sort);
     }
 
     @PatchMapping("update/{title}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void updateMovie(@PathVariable String title, @RequestBody JsonMergePatch patch) {
+    void updateMovie(@PathVariable final String title, @RequestBody final JsonMergePatch patch) {
         services.updateMovie(title, patch);
 
     }
     @GetMapping("/download/{title}")
-    ResponseEntity<Resource> downloadFile (@PathVariable String title){
+    ResponseEntity<Resource> downloadFile (@PathVariable final String title){
         Resource file = services.downloadFile(title);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename())

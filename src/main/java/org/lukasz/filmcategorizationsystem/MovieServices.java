@@ -63,7 +63,7 @@ public class MovieServices {
     }
 
     @Transactional
-    CreateNewMovie createNewMovie(CreateNewMovie dto, MultipartFile file) {
+    CreateNewMovie createNewMovie(final CreateNewMovie dto, final MultipartFile file) {
         String fullFilePath = Paths.get(localFilePath, file.getOriginalFilename()).toString();
         validation(dto);
         validateVideoFile(file);
@@ -85,7 +85,7 @@ public class MovieServices {
     }
 
     @SneakyThrows
-    Resource downloadFile(String title) {
+    Resource downloadFile(final String title) {
         Resource resource;
 
         Movie movie = repository.findMovieByTitle(title).orElseThrow();
@@ -100,7 +100,7 @@ public class MovieServices {
 
     }
 
-    private String searchMovieByTitle(String title) {
+    private String searchMovieByTitle(final String title) {
         return UriComponentsBuilder.fromUriString("/3/search/movie").queryParam("api_key", apiKey).queryParam("query", title).build().toString();
     }
 
@@ -109,7 +109,7 @@ public class MovieServices {
         return Arrays.stream(MovieSortField.values()).map(MovieSortField::getSort).toList();
     }
 
-    List<FindMovie> findAll(String param) {
+    List<FindMovie> findAll(final String param) {
         String sort = sortBy(param);
         return repository.findAll(Sort.by(sort)).stream().map(mapper::findMovie).toList();
 
@@ -117,7 +117,7 @@ public class MovieServices {
     }
 
     @Transactional
-    void updateMovie(String title, JsonMergePatch patch) {
+    void updateMovie(final String title, final JsonMergePatch patch) {
         Movie movie = repository.findMovieByTitle(title).orElseThrow();
         validation(mapper.response(movie));
 
@@ -125,7 +125,7 @@ public class MovieServices {
         repository.save(movie1);
     }
 
-    Language result(String title) {
+    Language result(final String title) {
 
         List<Language> results = restClient.get().uri(searchMovieByTitle(title)).accept(MediaType.APPLICATION_JSON).retrieve().body(Results.class).results();
         if (!results.isEmpty()) {
@@ -134,7 +134,7 @@ public class MovieServices {
         return new Language("null", 0);
     }
 
-    int ranking(long size, String language, double vote) {
+   private int ranking(long size, String language, double vote) {
         if (size < 209_715_200L) {
             return 100;
         }
@@ -154,7 +154,7 @@ public class MovieServices {
     }
 
 
-    private Movie applyPatch(Movie createNewMovie, JsonMergePatch patch) {
+    private Movie applyPatch( final Movie createNewMovie, final JsonMergePatch patch) {
         JsonNode jobOfferNode = objectMapper.valueToTree(createNewMovie);
         JsonNode jobOfferPatchedNode;
         try {
@@ -170,7 +170,7 @@ public class MovieServices {
     }
 
 
-    private String sortBy(String param) {
+    private String sortBy(final String param) {
         if (param.equals("film_size")) {
             return "sizeInBytes";
         } else if (param.equals("ranking")) {
@@ -180,7 +180,7 @@ public class MovieServices {
     }
 
 
-    private void saveMovieOnDisc(MultipartFile file) {
+    private void saveMovieOnDisc(final MultipartFile file) {
         Path destination = Paths.get(localFilePath, file.getOriginalFilename());
 
         try {
