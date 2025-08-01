@@ -158,6 +158,24 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
+    void shouldThrowCustomValidationException_forMovieTitleOver300Characters() {
+        String s = "aaa";
+
+        String repeat = s.repeat(101);
+
+        CreateNewMovie dto = new CreateNewMovie(repeat ,"director", 2011);
+        int sizeInBytes = 100 * 1024 * 1024; //100MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.mp4", "video/mp4", content);
+
+        assertThrows(CustomValidationException.class, () -> moviesController.createNewMovie(dto, mockFile));
+
+    }
+
+    @Test
     void shouldThrowMediaFileException_forInvalidMovieFormat() {
         CreateNewMovie dto = new CreateNewMovie("titlemp4", "director", 2011);
         int sizeInBytes = 100 * 1024 * 1024; //100MB
