@@ -36,10 +36,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class MovieServices {
+public class MovieService {
 
 
-    private final Logger logger = LoggerFactory.getLogger(MovieServices.class);
+    private final Logger logger = LoggerFactory.getLogger(MovieService.class);
     private final LocalValidatorFactoryBean validation;
     private final MoviesRepository repository;
     private final MoviesMapper mapper;
@@ -52,7 +52,7 @@ public class MovieServices {
     private String localFilePath;
 
 
-    public MovieServices(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient) {
+    public MovieService(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient) {
         this.validation = validation;
         this.repository = repository;
         this.mapper = mapper;
