@@ -17,7 +17,9 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -49,8 +51,8 @@ class FilmCategorizationSystemApplicationTests {
     Response response = new Response();
     @Autowired
     ExceptionsController exceptionsController;
-    @Autowired
-    MovieServices movieServices;
+
+
     @Autowired
     private MoviesController moviesController;
 
@@ -80,7 +82,6 @@ class FilmCategorizationSystemApplicationTests {
     void shouldAddMovieWithMultipartDataUnder200MB() {
         CreateNewMovie dto = new CreateNewMovie("terminator", "director", 2011);
         int sizeInBytes = 100 * 1024 * 1024; //100MB
-        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
 
 
         byte[] content = new byte[sizeInBytes];
@@ -124,8 +125,7 @@ class FilmCategorizationSystemApplicationTests {
     @Test
     void AddMovieWithMultipartDataUnder200MBWhenTitleExist() {
         CreateNewMovie dto = new CreateNewMovie("title1", "director", 2011);
-        int sizeInBytes = 100 * 1024; //100MB
-        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+        int sizeInBytes = 100 * 1024 * 1024; //100MB
 
 
         byte[] content = new byte[sizeInBytes];
@@ -137,10 +137,9 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void Validation() {
+    void shouldThrowCustomValidationException_forInvalidUserDat() {
         CreateNewMovie dto = new CreateNewMovie("", "director", 2011);
-        int sizeInBytes = 100 * 1024; //100MB
-        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+        int sizeInBytes = 100 * 1024 * 1024; //100MB
 
 
         byte[] content = new byte[sizeInBytes];
@@ -152,10 +151,9 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void ValidationMp4() {
+    void shouldThrowMediaFileException_forInvalidMovieFormat() {
         CreateNewMovie dto = new CreateNewMovie("titlemp4", "director", 2011);
-        int sizeInBytes = 100 * 1024; //100MB
-        // int sizeInBytes = 250 * 1024 * 1024;  //250MB
+        int sizeInBytes = 100 * 1024 * 1024; //100MB
 
 
         byte[] content = new byte[sizeInBytes];
@@ -167,7 +165,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void filmnotfounf() {
+    void shouldReturnRanking_0_when_MovieNotFountOnApi() {
         CreateNewMovie dto = new CreateNewMovie("notfoundfilm", "director", 2011);
 
         int sizeInBytes = 250 * 1024 * 1024;  //250MB
@@ -213,7 +211,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void shouldAShowAllFilmsSortByDefaoult() {
+    void shouldAShowAllFilmsSortById() {
         List<FindMovie> ranking = moviesController.allMovies("id");
         String json = gson.toJson(ranking);
 
@@ -233,7 +231,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void shouldUpdateRecord() throws JsonPatchException, IOException {
+    void shouldApplyPatchSuccessfully() throws JsonPatchException, IOException {
 
 
         String patchStr = "{ \"director\": \"New director\" }";
@@ -247,13 +245,6 @@ class FilmCategorizationSystemApplicationTests {
         Movie movie = moviesRepository.findMovieByTitle("title1").orElseThrow();
         assertEquals("New director", movie.getDirector());
         assertNotEquals("director1", movie.getDirector());
-
-    }
-
-    @Test
-    void uu() {
-        List<Movie> all = moviesRepository.findAll();
-        assertEquals(4, all.size());
 
     }
 
@@ -275,7 +266,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void testfileException() {
+    void testFileException() {
         FileException ex = new FileException("Failed to save file");
         ResponseError error = exceptionsController.saveFileException(ex);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), error.status());
@@ -285,7 +276,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void testmovieExist() {
+    void testMovieAlreadyExistsException() {
         MovieAlreadyExistsException ex = new MovieAlreadyExistsException("Movie with title already exists: test1");
         ResponseError error = exceptionsController.movieExist(ex);
         assertEquals(HttpStatus.CONFLICT.value(), error.status());
@@ -295,11 +286,22 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void FileException() {
+    void shouldThrowFileException_whenFileNotFound() {
 
-        String title = "title2";
+        String title = "title3";
 
         assertThrows(FileException.class, () -> moviesController.downloadFile(title));
+
+
+    }
+
+    @Test
+    void shouldReturnFileAsResource() {
+        String title = "title2";
+
+        ResponseEntity<Resource> resource = moviesController.downloadFile(title);
+
+        assertEquals(200, resource.getStatusCode().value());
 
 
     }
