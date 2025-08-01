@@ -282,7 +282,7 @@ class FilmCategorizationSystemApplicationTests {
 
     }
     @Test
-    void shouldApplyPatch_shoutThrowException() throws JsonPatchException, IOException {
+    void shouldNotApplyPatch_shoutThrowException() throws JsonPatchException, IOException {
         String title = "notExist";
 
 
@@ -351,6 +351,16 @@ class FilmCategorizationSystemApplicationTests {
         String title = "title3";
 
         assertThrows(FileException.class, () -> moviesController.downloadFile(title));
+
+
+    }
+
+    @Test
+    void shouldThrowMovieNotFoundException_whenMovieNotFound() {
+
+        String title = "NotExist";
+
+        assertThrows(MovieNotFoundException.class, () -> moviesController.downloadFile(title));
 
 
     }
