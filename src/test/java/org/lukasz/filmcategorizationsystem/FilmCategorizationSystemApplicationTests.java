@@ -190,7 +190,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void shouldReturnRanking_0_when_MovieNotFountOnApi() {
+    void shouldReturnRanking_0_when_MovieNotFountOnApi_AndSizeOver200MB() {
         CreateNewMovie dto = new CreateNewMovie("notfoundfilm", "director", 2011);
 
         int sizeInBytes = 250 * 1024 * 1024;  //250MB
@@ -210,6 +210,28 @@ class FilmCategorizationSystemApplicationTests {
         assertEquals(0, movie.getRanking());
         assertEquals(262144000, movie.getSizeInBytes());
 
+    }
+
+    @Test
+    void shouldReturnRanking_100_when_MovieNotFountOnApi_AndSizeUnder200MB() {
+        CreateNewMovie dto = new CreateNewMovie("notfoundfilm", "director", 2011);
+
+        int sizeInBytes = 100 * 1024 * 1024; //100MB
+
+
+        byte[] content = new byte[sizeInBytes];
+
+        MockMultipartFile mockFile = new MockMultipartFile("file", "testfile.mp4", "video/mp4", content);
+
+        moviesController.createNewMovie(dto, mockFile);
+
+
+        Movie movie = moviesRepository.findMovieByTitle("notfoundfilm").orElseThrow();
+
+        assertEquals("director", movie.getDirector());
+        assertEquals(2011, movie.getProductionYear());
+        assertEquals(100, movie.getRanking());
+        assertEquals(104857600, movie.getSizeInBytes());
 
     }
 
