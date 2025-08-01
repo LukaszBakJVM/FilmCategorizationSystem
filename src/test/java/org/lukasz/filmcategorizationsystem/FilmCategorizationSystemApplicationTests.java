@@ -227,7 +227,7 @@ class FilmCategorizationSystemApplicationTests {
     }
 
     @Test
-    void shouldAShowAllFilmsSortByIdWhenSortNull() {
+    void shouldAShowAllFilmsSortByIdWhenSortNotPresent() {
 
         webTestClient.get().uri("/movies/all").accept(MediaType.APPLICATION_JSON).exchange()
                 .expectStatus().isOk().expectBody().json(response.id, JsonCompareMode.STRICT);
