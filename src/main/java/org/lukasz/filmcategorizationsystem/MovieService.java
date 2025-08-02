@@ -118,7 +118,6 @@ public class MovieService {
     @Transactional
     void updateMovie(final String title, final JsonMergePatch patch) {
         Movie movie = repository.findMovieByTitle(title).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", title)));
-        mapper.response(movie);
 
         Movie applyPatch = applyPatch(movie, patch);
         repository.save(applyPatch);
