@@ -195,7 +195,7 @@ public class MovieService {
         if (!violations.isEmpty()) {
             String errorMessage = violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(" , "));
 
-            logger.info("inside validation  errors: {}", errorMessage);
+            logger.error("inside validation  errors: {}", errorMessage);
 
             throw new CustomValidationException(errorMessage);
         }
