@@ -67,6 +67,7 @@ public class MovieService {
         validation(dto);
         validateVideoFile(file);
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
+            logger.error("Movie with title already exists {}",dto.title());
             throw new MovieAlreadyExistsException(String.format("Movie with title already exists: %s ", dto.title()));
         });
         long size = file.getSize();
@@ -92,7 +93,10 @@ public class MovieService {
         Path filePath = Paths.get(patch);
 
         if (!Files.exists(filePath)) {
+            logger.error("File not found on disk {}",title);
             throw new FileException("File not found on disk");
+
+
         }
         resource = new UrlResource(filePath.toUri());
         return resource;
@@ -180,6 +184,7 @@ public class MovieService {
 
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
+            logger.error("Failed to save file {}",file);
             throw new FileException("Failed to save file");
         }
 
