@@ -1,13 +1,11 @@
 package org.lukasz.filmcategorizationsystem;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.google.gson.Gson;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
-import org.lukasz.filmcategorizationsystem.exceptions.ExceptionsController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,12 +40,9 @@ class WebTestClientTest {
     @Autowired
     MoviesRepository moviesRepository;
     @Autowired
-    Gson gson;
-    Response response = new Response();
-    @Autowired
-    ExceptionsController exceptionsController;
-    @Autowired
     WebTestClient webTestClient;
+
+    Response response = new Response();
 
 
     @DynamicPropertySource
