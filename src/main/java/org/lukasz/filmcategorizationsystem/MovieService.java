@@ -209,6 +209,12 @@ public class MovieService {
     }
 
     private void validateVideoFile(MultipartFile file) {
+
+        long fileOver1GB = 1_073_741_824L;
+        if (file.getSize() > fileOver1GB) {
+            logger.error("File {} exceeds the maximum allowed size of 1GB  {}", file.getName(),file.getSize());
+            throw new FileException("File size exceeds the maximum allowed size of 1GB");
+        }
         Set<String> supportedVideoTypes = Set.of("video/mp4", "video/x-matroska", "video/x-msvideo");
 
         String contentType = file.getContentType();
