@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -63,12 +64,16 @@ class FilmCategorizationSystemApplicationTests {
     @Autowired
     private MoviesController moviesController;
 
+
     @DynamicPropertySource
     static void registerDynamicProperties(DynamicPropertyRegistry registry) {
         registry.add("baseUrl", wireMockServer::baseUrl);
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://" + postgreSQLContainer.getHost() + ":" + postgreSQLContainer.getFirstMappedPort() + "/" + postgreSQLContainer.getDatabaseName());
+        registry.add("spring.datasource.url", () ->
+                "jdbc:postgresql://" + postgreSQLContainer.getHost() + ":" + postgreSQLContainer.getFirstMappedPort() + "/" + postgreSQLContainer.getDatabaseName());
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
+        registry.add("movie.localFilePath", () ->
+                Paths.get(System.getProperty("user.dir")).toAbsolutePath().toString());
 
     }
 
@@ -163,7 +168,7 @@ class FilmCategorizationSystemApplicationTests {
 
         String repeat = s.repeat(101);
 
-        CreateNewMovie dto = new CreateNewMovie(repeat ,"director", 2011);
+        CreateNewMovie dto = new CreateNewMovie(repeat, "director", 2011);
         int sizeInBytes = 100 * 1024 * 1024; //100MB
 
 
@@ -303,6 +308,7 @@ class FilmCategorizationSystemApplicationTests {
         assertNotEquals("director1", movie.getDirector());
 
     }
+
     @Test
     void shouldNotApplyPatch_shoutThrowException() throws JsonPatchException, IOException {
         String title = "notExist";
@@ -314,9 +320,7 @@ class FilmCategorizationSystemApplicationTests {
         JsonMergePatch patch = JsonMergePatch.fromJson(patchNode);
 
 
-        assertThrows(MovieNotFoundException.class, () -> moviesController.updateMovie(title,patch));
-
-
+        assertThrows(MovieNotFoundException.class, () -> moviesController.updateMovie(title, patch));
 
 
     }
@@ -357,6 +361,7 @@ class FilmCategorizationSystemApplicationTests {
 
 
     }
+
     @Test
     void testMovieNotFoundException() {
         MovieNotFoundException ex = new MovieNotFoundException("Movie notExist not found");
