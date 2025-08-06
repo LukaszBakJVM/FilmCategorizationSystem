@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MovieService {
@@ -66,7 +67,8 @@ public class MovieService {
 
     @Transactional
     CreateNewMovie createNewMovie(final CreateNewMovie dto, final MultipartFile file) {
-        String fullFilePath = Paths.get(localFilePath, file.getOriginalFilename()).toString();
+        String uuid = UUID.randomUUID().toString();
+        String fullFilePath = Paths.get(localFilePath,  uuid+ "-"+file.getOriginalFilename()).toString();
         validation.validation(dto);
         validation.validateVideoFile(file);
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
@@ -80,7 +82,7 @@ public class MovieService {
         Language data = result(movie.getTitle());
         int ranking = calculateRanking.ranking(size, data.original_language(), data.vote_average());
         movie.setRanking(ranking);
-        saveMovieOnDisc(file);
+        saveMovieOnDisc(file,uuid);
 
         repository.save(movie);
         return mapper.response(movie);
@@ -163,8 +165,8 @@ public class MovieService {
     }
 
 
-    private void saveMovieOnDisc(final MultipartFile file) {
-        Path destination = Paths.get(localFilePath, file.getOriginalFilename());
+    private void saveMovieOnDisc(final MultipartFile file, String uuid) {
+        Path destination = Paths.get(localFilePath,uuid+ "-"+ file.getOriginalFilename());
 
         try {
 
