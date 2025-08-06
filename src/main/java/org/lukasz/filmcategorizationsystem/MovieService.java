@@ -4,14 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ConstraintViolation;
 import lombok.SneakyThrows;
 import org.lukasz.filmcategorizationsystem.api.Language;
 import org.lukasz.filmcategorizationsystem.api.Results;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.enums.MovieSortField;
-import org.lukasz.filmcategorizationsystem.exceptions.*;
+import org.lukasz.filmcategorizationsystem.exceptions.FileException;
+import org.lukasz.filmcategorizationsystem.exceptions.MovieAlreadyExistsException;
+import org.lukasz.filmcategorizationsystem.exceptions.MovieNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,6 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,19 +32,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
 
 
     private final Logger logger = LoggerFactory.getLogger(MovieService.class);
-    private final LocalValidatorFactoryBean validation;
+
     private final MoviesRepository repository;
     private final MoviesMapper mapper;
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
+    private final CalculateRanking calculateRanking;
+    private final Validation validation;
 
     @Value("${api.key}")
     private String apiKey;
@@ -52,22 +52,24 @@ public class MovieService {
     private String localFilePath;
 
 
-    public MovieService(LocalValidatorFactoryBean validation, MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient) {
-        this.validation = validation;
+    public MovieService(MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient, CalculateRanking calculateRanking, Validation validation) {
+
         this.repository = repository;
         this.mapper = mapper;
         this.objectMapper = objectMapper;
         this.restClient = restClient;
 
+        this.calculateRanking = calculateRanking;
+        this.validation = validation;
     }
 
     @Transactional
     CreateNewMovie createNewMovie(final CreateNewMovie dto, final MultipartFile file) {
         String fullFilePath = Paths.get(localFilePath, file.getOriginalFilename()).toString();
-        validation(dto);
-        validateVideoFile(file);
+        validation.validation(dto);
+        validation.validateVideoFile(file);
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
-            logger.error("Movie with title already exists {}",dto.title());
+            logger.error("Movie with title already exists {}", dto.title());
             throw new MovieAlreadyExistsException(String.format("Movie with title already exists: %s ", dto.title()));
         });
         long size = file.getSize();
@@ -75,7 +77,7 @@ public class MovieService {
         movie.setLocalFilePath(fullFilePath);
         movie.setSizeInBytes(size);
         Language data = result(movie.getTitle());
-        int ranking = ranking(size, data.original_language(), data.vote_average());
+        int ranking = calculateRanking.ranking(size, data.original_language(), data.vote_average());
         movie.setRanking(ranking);
         saveMovieOnDisc(file);
 
@@ -93,7 +95,7 @@ public class MovieService {
         Path filePath = Paths.get(patch);
 
         if (!Files.exists(filePath)) {
-            logger.error("File not found on disk {}",title);
+            logger.error("File not found on disk {}", title);
             throw new FileException("File not found on disk");
 
 
@@ -136,26 +138,6 @@ public class MovieService {
         return new Language("null", 0);
     }
 
-    private int ranking(final long size, final String language, final double vote) {
-        long smallFile = 209_715_200L;
-        if (size < smallFile) {
-            return 100;
-        }
-        int ranking = 0;
-
-        if ("pl".equalsIgnoreCase(language)) {
-            ranking += 200;
-
-        }
-
-        if (vote >= 5.0) {
-            ranking += 100;
-        }
-
-
-        return ranking;
-    }
-
 
     @SneakyThrows
     private Movie applyPatch(final Movie createNewMovie, final JsonMergePatch patch) {
@@ -184,7 +166,7 @@ public class MovieService {
 
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            logger.error("Failed to save file {}",file);
+            logger.error("Failed to save file {}", file);
             throw new FileException("Failed to save file");
         }
 
@@ -192,36 +174,5 @@ public class MovieService {
     }
 
 
-    private <T> void validation(T t) {
-
-        Set<ConstraintViolation<T>> violations = validation.validate(t);
-
-
-        if (!violations.isEmpty()) {
-            String errorMessage = violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(" , "));
-
-            logger.error("inside validation  errors: {}", errorMessage);
-
-            throw new CustomValidationException(errorMessage);
-        }
-
-
-    }
-
-    private void validateVideoFile(MultipartFile file) {
-
-        long fileOver1GB = 1_073_741_824L;
-        if (file.getSize() > fileOver1GB) {
-            logger.error("File {} exceeds the maximum allowed size of 1GB  {}", file.getOriginalFilename(),file.getSize());
-            throw new FileException("File size exceeds the maximum allowed size of 1GB");
-        }
-        Set<String> supportedVideoTypes = Set.of("video/mp4", "video/x-matroska", "video/x-msvideo");
-
-        String contentType = file.getContentType();
-
-        if (!supportedVideoTypes.contains(contentType)) {
-            throw new MediaFileException("Only video files (.mp4, .avi, .mkv) are allowed");
-        }
-    }
 }
 
