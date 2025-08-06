@@ -9,6 +9,7 @@ import org.lukasz.filmcategorizationsystem.api.Language;
 import org.lukasz.filmcategorizationsystem.api.Results;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
+import org.lukasz.filmcategorizationsystem.dto.UpdateMovie;
 import org.lukasz.filmcategorizationsystem.enums.MovieSortField;
 import org.lukasz.filmcategorizationsystem.exceptions.FileException;
 import org.lukasz.filmcategorizationsystem.exceptions.MovieAlreadyExistsException;
@@ -123,10 +124,13 @@ public class MovieService {
 
     @Transactional
     void updateMovie(final String title, final JsonMergePatch patch) {
-        Movie movie = repository.findMovieByTitle(title).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", title)));
+        UpdateMovie updateMovie = updateMovie(title);
+        UpdateMovie applyPatch = applyPatch(updateMovie, patch);
 
-        Movie applyPatch = applyPatch(movie, patch);
-        repository.save(applyPatch);
+
+        Movie movie = mapper.updateMovieToEntity(applyPatch);
+
+        repository.save(movie);
     }
 
     private Language result(final String title) {
@@ -140,12 +144,12 @@ public class MovieService {
 
 
     @SneakyThrows
-    private Movie applyPatch(final Movie createNewMovie, final JsonMergePatch patch) {
-        JsonNode movieNode = objectMapper.valueToTree(createNewMovie);
+    private UpdateMovie applyPatch(final UpdateMovie updateMovie, final JsonMergePatch patch) {
+        JsonNode movieNode = objectMapper.valueToTree(updateMovie);
         JsonNode moviePatchedNode = patch.apply(movieNode);
 
 
-        return objectMapper.treeToValue(moviePatchedNode, Movie.class);
+        return objectMapper.treeToValue(moviePatchedNode, UpdateMovie.class);
     }
 
 
@@ -171,6 +175,12 @@ public class MovieService {
         }
 
 
+    }
+
+    UpdateMovie updateMovie(String findByTitle) {
+        Movie movie = repository.findMovieByTitle(findByTitle).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", findByTitle)));
+
+        return mapper.toUpdateDto(movie);
     }
 
 

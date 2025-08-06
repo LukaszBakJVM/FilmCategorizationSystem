@@ -77,6 +77,7 @@ class WebTestClientTest {
 
         Movie movie = moviesRepository.findMovieByTitle("title1").orElseThrow();
         assertEquals("New director", movie.getDirector());
+        assertEquals(44749826,movie.getSizeInBytes());
         assertNotEquals("director1", movie.getDirector());
     }
 
