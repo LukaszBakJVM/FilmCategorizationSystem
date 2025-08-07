@@ -136,8 +136,8 @@ public class MovieServiceImpl implements MovieService {
     }
 
 
-    @Override
-    public UpdateMovie updatePatch(String findByTitle) {
+
+    private UpdateMovie updatePatch(String findByTitle) {
         Movie movie = repository.findMovieByTitle(findByTitle).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", findByTitle)));
 
         return mapper.toUpdateDto(movie);
