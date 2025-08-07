@@ -6,17 +6,18 @@ import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import java.util.List;
 
 public interface MovieService {
-    CreateNewMovie createNewMovie(final CreateNewMovie dto, final MultipartFile file);
+    CreateNewMovie createNewMovie( CreateNewMovie dto,  MultipartFile file);
 
-    Resource downloadFile(final String title);
+    Resource downloadFile( String title);
 
     List<String> sortFieldsEnums();
 
-    List<FindMovie> findAll(final String param);
+    List<FindMovie> findAll(String param);
 
-    void updateMovie(final String title, final JsonMergePatch patch);
+    void updateMovie( String title,  JsonMergePatch patch);
 
 }
