@@ -122,7 +122,7 @@ public class MovieServiceImpl implements MovieService {
         String sort = sortBy(param);
         return repository.findAll(Sort.by(sort)).stream().map(mapper::findMovie).toList();
     }
-
+     @Transactional
     @Override
     public void updateMovie(String title, JsonMergePatch patch) {
         UpdateMovie updateMovie = updatePatch(title);
