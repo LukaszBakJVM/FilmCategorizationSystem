@@ -1,8 +1,9 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.controller;
 
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
+import org.lukasz.filmcategorizationsystem.service.MovieService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,42 +19,40 @@ import java.util.List;
 public class MoviesController {
     private final MovieService services;
 
-
     public MoviesController(MovieService services) {
         this.services = services;
-
     }
 
-    @PostMapping( value = "/addMovie",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+
+    @PostMapping(value = "/addMovie", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @ResponseStatus(HttpStatus.CREATED)
-    CreateNewMovie createNewMovie(@RequestPart final CreateNewMovie dto, @RequestPart final MultipartFile file) {
+   public CreateNewMovie createNewMovie(@RequestPart final CreateNewMovie dto, @RequestPart final MultipartFile file) {
         return services.createNewMovie(dto, file);
     }
 
     @GetMapping("/sortFields")
     @ResponseStatus(HttpStatus.OK)
-    List<String> sortFields() {
+   public List<String> sortFields() {
         return services.sortFieldsEnums();
     }
 
     @GetMapping("/all")
     @ResponseStatus(HttpStatus.OK)
-    List<FindMovie> allMovies(@RequestParam(required = false, defaultValue = "id") final String sort) {
+    public List<FindMovie> allMovies(@RequestParam(required = false, defaultValue = "id") final String sort) {
         return services.findAll(sort);
     }
 
     @PatchMapping("update/{title}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void updateMovie(@PathVariable final String title, @RequestBody final JsonMergePatch patch) {
+   public void updateMovie(@PathVariable final String title, @RequestBody final JsonMergePatch patch) {
         services.updateMovie(title, patch);
 
     }
+
     @GetMapping("/download/{title}")
-    ResponseEntity<Resource> downloadFile (@PathVariable final String title){
+   public ResponseEntity<Resource> downloadFile(@PathVariable final String title) {
         Resource file = services.downloadFile(title);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename())
-                .body(file);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename()).body(file);
 
     }
 

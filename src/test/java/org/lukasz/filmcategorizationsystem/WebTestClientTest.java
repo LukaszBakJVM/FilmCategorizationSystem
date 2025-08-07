@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
+import org.lukasz.filmcategorizationsystem.entity.Movie;
+import org.lukasz.filmcategorizationsystem.repo.MoviesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;

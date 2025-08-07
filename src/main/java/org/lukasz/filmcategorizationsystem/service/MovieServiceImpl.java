@@ -1,4 +1,4 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,10 +10,14 @@ import org.lukasz.filmcategorizationsystem.api.Results;
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.dto.UpdateMovie;
+import org.lukasz.filmcategorizationsystem.entity.Movie;
 import org.lukasz.filmcategorizationsystem.enums.MovieSortField;
 import org.lukasz.filmcategorizationsystem.exceptions.FileException;
 import org.lukasz.filmcategorizationsystem.exceptions.MovieAlreadyExistsException;
 import org.lukasz.filmcategorizationsystem.exceptions.MovieNotFoundException;
+import org.lukasz.filmcategorizationsystem.repo.MoviesRepository;
+import org.lukasz.filmcategorizationsystem.utils.CalculateRanking;
+import org.lukasz.filmcategorizationsystem.utils.Validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,10 +40,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class MovieService {
+public class MovieServiceImpl implements MovieService {
 
 
-    private final Logger logger = LoggerFactory.getLogger(MovieService.class);
+    private final Logger logger = LoggerFactory.getLogger(MovieServiceImpl.class);
 
     private final MoviesRepository repository;
     private final MoviesMapper mapper;
@@ -54,21 +58,21 @@ public class MovieService {
     private String localFilePath;
 
 
-    public MovieService(MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient, CalculateRanking calculateRanking, Validation validation) {
+    public MovieServiceImpl(MoviesRepository repository, MoviesMapper mapper, ObjectMapper objectMapper, RestClient restClient, CalculateRanking calculateRanking, Validation validation) {
 
         this.repository = repository;
         this.mapper = mapper;
         this.objectMapper = objectMapper;
         this.restClient = restClient;
-
         this.calculateRanking = calculateRanking;
         this.validation = validation;
     }
 
     @Transactional
-    CreateNewMovie createNewMovie(final CreateNewMovie dto, final MultipartFile file) {
+    @Override
+    public CreateNewMovie createNewMovie(CreateNewMovie dto, MultipartFile file) {
         String uuid = UUID.randomUUID().toString();
-        String fullFilePath = Paths.get(localFilePath,  uuid+ "-"+file.getOriginalFilename()).toString();
+        String fullFilePath = Paths.get(localFilePath, uuid + "-" + file.getOriginalFilename()).toString();
         validation.validation(dto);
         validation.validateVideoFile(file);
         repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
@@ -82,7 +86,7 @@ public class MovieService {
         Language data = result(movie.getTitle());
         int ranking = calculateRanking.ranking(size, data.original_language(), data.vote_average());
         movie.setRanking(ranking);
-        saveMovieOnDisc(file,uuid);
+        saveMovieOnDisc(file, uuid);
 
         repository.save(movie);
         return mapper.response(movie);
@@ -90,7 +94,8 @@ public class MovieService {
     }
 
     @SneakyThrows
-    Resource downloadFile(final String title) {
+    @Override
+    public Resource downloadFile(String title) {
         Resource resource;
 
         Movie movie = repository.findMovieByTitle(title).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", title)));
@@ -105,28 +110,22 @@ public class MovieService {
         }
         resource = new UrlResource(filePath.toUri());
         return resource;
-
     }
 
-    private String searchMovieByTitle(final String title) {
-        return UriComponentsBuilder.fromUriString("/3/search/movie").queryParam("api_key", apiKey).queryParam("query", title).build().toString();
-    }
-
-
-    List<String> sortFieldsEnums() {
+    @Override
+    public List<String> sortFieldsEnums() {
         return Arrays.stream(MovieSortField.values()).map(MovieSortField::getSort).toList();
     }
 
-    List<FindMovie> findAll(final String param) {
+    @Override
+    public List<FindMovie> findAll(String param) {
         String sort = sortBy(param);
         return repository.findAll(Sort.by(sort)).stream().map(mapper::findMovie).toList();
-
-
     }
 
-    @Transactional
-    void updateMovie(final String title, final JsonMergePatch patch) {
-        UpdateMovie updateMovie = updateMovie(title);
+    @Override
+    public void updateMovie(String title, JsonMergePatch patch) {
+        UpdateMovie updateMovie = updatePatch(title);
         UpdateMovie applyPatch = applyPatch(updateMovie, patch);
 
 
@@ -134,6 +133,20 @@ public class MovieService {
 
         repository.save(movie);
     }
+
+
+    @Override
+    public UpdateMovie updatePatch(String findByTitle) {
+        Movie movie = repository.findMovieByTitle(findByTitle).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", findByTitle)));
+
+        return mapper.toUpdateDto(movie);
+    }
+
+
+    private String searchMovieByTitle(final String title) {
+        return UriComponentsBuilder.fromUriString("/3/search/movie").queryParam("api_key", apiKey).queryParam("query", title).build().toString();
+    }
+
 
     private Language result(final String title) {
 
@@ -166,7 +179,7 @@ public class MovieService {
 
 
     private void saveMovieOnDisc(final MultipartFile file, String uuid) {
-        Path destination = Paths.get(localFilePath,uuid+ "-"+ file.getOriginalFilename());
+        Path destination = Paths.get(localFilePath, uuid + "-" + file.getOriginalFilename());
 
         try {
 
@@ -177,12 +190,6 @@ public class MovieService {
         }
 
 
-    }
-
-    UpdateMovie updateMovie(String findByTitle) {
-        Movie movie = repository.findMovieByTitle(findByTitle).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", findByTitle)));
-
-        return mapper.toUpdateDto(movie);
     }
 
 

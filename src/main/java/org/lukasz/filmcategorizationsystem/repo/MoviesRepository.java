@@ -1,6 +1,7 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.repo;
 
 
+import org.lukasz.filmcategorizationsystem.entity.Movie;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

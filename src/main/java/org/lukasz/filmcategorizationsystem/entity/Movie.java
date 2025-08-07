@@ -1,4 +1,4 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

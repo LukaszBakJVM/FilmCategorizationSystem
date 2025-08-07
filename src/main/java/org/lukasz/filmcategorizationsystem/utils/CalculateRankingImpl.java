@@ -1,11 +1,11 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.utils;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class CalculateRanking {
-
-     int ranking(final long size, final String language, final double vote) {
+public class CalculateRankingImpl implements CalculateRanking {
+     @Override
+    public int ranking(final long size, final String language, final double vote) {
         long smallFile = 209_715_200L;
         if (size < smallFile) {
             return 100;

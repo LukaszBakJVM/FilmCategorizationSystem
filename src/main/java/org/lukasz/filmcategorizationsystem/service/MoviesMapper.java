@@ -1,8 +1,9 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.service;
 
 import org.lukasz.filmcategorizationsystem.dto.CreateNewMovie;
 import org.lukasz.filmcategorizationsystem.dto.FindMovie;
 import org.lukasz.filmcategorizationsystem.dto.UpdateMovie;
+import org.lukasz.filmcategorizationsystem.entity.Movie;
 import org.springframework.stereotype.Component;
 
 @Component

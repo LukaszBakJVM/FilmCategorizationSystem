@@ -1,4 +1,4 @@
-package org.lukasz.filmcategorizationsystem;
+package org.lukasz.filmcategorizationsystem.utils;
 
 import jakarta.validation.ConstraintViolation;
 import org.lukasz.filmcategorizationsystem.exceptions.CustomValidationException;
@@ -14,16 +14,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class Validation {
+public class ValidationImpl implements Validation {
     private final LocalValidatorFactoryBean validatorFactoryBean;
-    private final Logger logger = LoggerFactory.getLogger(Validation.class);
+    private final Logger logger = LoggerFactory.getLogger(ValidationImpl.class);
 
-    public Validation(LocalValidatorFactoryBean validatorFactoryBean) {
+    public ValidationImpl(LocalValidatorFactoryBean validatorFactoryBean) {
         this.validatorFactoryBean = validatorFactoryBean;
     }
 
-    <T> void validation(T t) {
 
+    @Override
+  public   <T> void validation(T t) {
         Set<ConstraintViolation<T>> violations = validatorFactoryBean.validate(t);
 
 
@@ -38,8 +39,8 @@ public class Validation {
 
     }
 
-    void validateVideoFile(MultipartFile file) {
-
+    @Override
+    public void validateVideoFile(MultipartFile file) {
         long fileOver1GB = 1_073_741_824L;
         if (file.getSize() > fileOver1GB) {
             logger.error("File {} exceeds the maximum allowed size of 1GB  {}", file.getOriginalFilename(), file.getSize());
@@ -53,4 +54,6 @@ public class Validation {
             throw new MediaFileException("Only video files (.mp4, .avi, .mkv) are allowed");
         }
     }
+
+
 }
