@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -75,7 +76,7 @@ public class MovieServiceImpl implements MovieService {
         String fullFilePath = Paths.get(localFilePath, uuid + "-" + file.getOriginalFilename()).toString();
         validation.validation(dto);
         validation.validateVideoFile(file);
-        repository.findMovieByTitle(dto.title()).ifPresent(movie -> {
+        findByTitle(dto.title()).ifPresent(movie -> {
             logger.error("Movie with title already exists {}", dto.title());
             throw new MovieAlreadyExistsException(String.format("Movie with title already exists: %s ", dto.title()));
         });
@@ -126,7 +127,10 @@ public class MovieServiceImpl implements MovieService {
     @Transactional
     @Override
     public void updateMovie(String title, JsonMergePatch patch) {
-        UpdateMovie updateMovie = updatePatch(title);
+        Movie findByTitle = findByTitle(title).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", title)));
+        UpdateMovie updateMovie = mapper.toUpdateDto(findByTitle);
+
+
         UpdateMovie applyPatch = applyPatch(updateMovie, patch);
 
 
@@ -137,10 +141,8 @@ public class MovieServiceImpl implements MovieService {
 
 
 
-    private UpdateMovie updatePatch(String findByTitle) {
-        Movie movie = repository.findMovieByTitle(findByTitle).orElseThrow(() -> new MovieNotFoundException(String.format("Movie %s not found", findByTitle)));
-
-        return mapper.toUpdateDto(movie);
+    private Optional<Movie> findByTitle(String findByTitle) {
+        return repository.findMovieByTitle(findByTitle);
     }
 
 
